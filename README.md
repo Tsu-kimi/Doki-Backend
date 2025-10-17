@@ -72,3 +72,6 @@ Frontend (Next.js) → FastAPI Gateway → Orchestrator Agent → Mapping Agent 
 
 These overviews describe the core architecture, flows, and integration boundaries for **Doki’s frontend and backend**, ensuring both teams can develop and deploy independently while maintaining tight synchronization through shared APIs and Supabase storage.
 
+## 🔐 Security Notes: OAuth Token Storage
+- **MVP**: Tokens are stored in plaintext in the `credentials` table (linked by `user_id`). Encryption will be added.
+- **Production**: Encrypt tokens using Google Cloud Secret Manager or a GCP KMS key. You may also evaluate Supabase encryption options for column-level protection.

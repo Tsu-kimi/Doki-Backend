@@ -26,4 +26,6 @@ def get_google_oauth_config() -> Dict[str, str]:
 
 
 async def get_current_user() -> Dict[str, Any]:
-    return {"user_id": "stub"}
+    # TODO: Replace with real Supabase Auth integration
+    # For MVP, using a fixed test UUID that exists in auth.users
+    return {"user_id": "00000000-0000-0000-0000-000000000000"}
