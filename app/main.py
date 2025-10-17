@@ -4,6 +4,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.connectors import router as connectors_router
 from app.api.agent import router as agent_router
 from app.api.auth import router as auth_router
+from app.core.secrets import get_secret_value
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,7 +17,13 @@ if os.getenv("ENVIRONMENT") != "production":
 app = FastAPI(title="Doki Backend")
 
 # Add session middleware for OAuth state management
-secret_key = os.getenv("SESSION_SECRET_KEY", "dev-secret-key-replace-in-production")
+# Fetch session secret from Secret Manager
+secret_key_name = os.getenv("SESSION_SECRET_KEY_NAME")
+if secret_key_name:
+    secret_key = get_secret_value(secret_key_name)
+else:
+    # Fallback for development
+    secret_key = "dev-secret-key-replace-in-production"
 app.add_middleware(SessionMiddleware, secret_key=secret_key)
 
 @app.get("/")

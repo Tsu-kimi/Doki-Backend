@@ -5,14 +5,16 @@ Tokens are encrypted at rest in the database for security.
 import os
 from functools import lru_cache
 from cryptography.fernet import Fernet
+from app.core.secrets import get_secret_value
 
 
 @lru_cache(maxsize=1)
 def _get_cipher() -> Fernet:
-    """Get or create Fernet cipher instance using encryption key from environment."""
-    key = os.getenv("ENCRYPTION_KEY")
-    if not key:
-        raise RuntimeError("ENCRYPTION_KEY is not set in environment")
+    """Get or create Fernet cipher instance using encryption key from Secret Manager."""
+    key_name = os.getenv("ENCRYPTION_KEY_NAME")
+    if not key_name:
+        raise RuntimeError("ENCRYPTION_KEY_NAME is not set in environment")
+    key = get_secret_value(key_name)
     return Fernet(key.encode())
 
 
