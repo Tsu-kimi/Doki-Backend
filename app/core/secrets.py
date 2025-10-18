@@ -2,7 +2,14 @@ import os
 from functools import lru_cache
 from google.cloud import secretmanager
 
-_client = secretmanager.SecretManagerServiceClient()
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = secretmanager.SecretManagerServiceClient()
+    return _client
 
 
 def get_project_id() -> str:
@@ -17,5 +24,6 @@ def get_secret_value(secret_name: str, version: str = "latest") -> str:
     if not secret_name:
         raise ValueError("secret_name is required")
     name = f"projects/{get_project_id()}/secrets/{secret_name}/versions/{version}"
-    response = _client.access_secret_version(name=name)
+    client = _get_client()
+    response = client.access_secret_version(name=name)
     return response.payload.data.decode("utf-8")

@@ -33,7 +33,12 @@ app.add_middleware(
 # Fetch session secret from Secret Manager
 secret_key_name = os.getenv("SESSION_SECRET_KEY_NAME")
 if secret_key_name:
-    secret_key = get_secret_value(secret_key_name)
+    try:
+        secret_key = get_secret_value(secret_key_name)
+    except Exception as e:
+        print(f"Warning: Failed to fetch session secret from Secret Manager: {e}")
+        print("Using fallback secret key. OAuth may not work correctly.")
+        secret_key = "fallback-secret-key-replace-in-production"
 else:
     # Fallback for development
     secret_key = "dev-secret-key-replace-in-production"
