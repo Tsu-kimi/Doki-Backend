@@ -5,7 +5,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.connectors import router as connectors_router
 from app.api.agent import router as agent_router
 from app.api.auth import router as auth_router
-from app.core.secrets import get_secret_value
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,16 +29,9 @@ app.add_middleware(
 )
 
 # Add session middleware for OAuth state management
-# Fetch session secret from Secret Manager
-secret_key_name = os.getenv("SESSION_SECRET_KEY_NAME")
-if secret_key_name:
-    try:
-        secret_key = get_secret_value(secret_key_name)
-    except Exception as e:
-        print(f"Warning: Failed to fetch session secret from Secret Manager: {e}")
-        print("Using fallback secret key. OAuth may not work correctly.")
-        secret_key = "fallback-secret-key-replace-in-production"
-else:
+# Cloud Run injects the actual secret value via secretKeyRef
+secret_key = os.getenv("SESSION_SECRET_KEY_NAME")
+if not secret_key:
     # Fallback for development
     secret_key = "dev-secret-key-replace-in-production"
 app.add_middleware(SessionMiddleware, secret_key=secret_key)

@@ -5,7 +5,6 @@ import os
 import requests
 from supabase import create_client, Client
 from typing import List, Dict, Optional
-from app.core.secrets import get_secret_value
 from app.core.encryption import encrypt_token_for_storage, decrypt_token_from_storage
 from app.models.connectors import TableSchema, TableColumn
 
@@ -13,17 +12,17 @@ from app.models.connectors import TableSchema, TableColumn
 def get_supabase_client() -> Client:
     """
     Create Supabase client for Doki's backend Supabase instance.
-    Uses new secret key from Secret Manager.
+    Cloud Run injects secrets directly via secretKeyRef.
     """
     url = os.getenv("SUPABASE_URL")
     if not url:
         raise RuntimeError("SUPABASE_URL is not set")
     
-    secret_key_name = os.getenv("SUPABASE_SECRET_KEY_NAME")
-    if not secret_key_name:
+    # Cloud Run injects the actual secret value, not the name
+    secret_key = os.getenv("SUPABASE_SECRET_KEY_NAME")
+    if not secret_key:
         raise RuntimeError("SUPABASE_SECRET_KEY_NAME is not set")
     
-    secret_key = get_secret_value(secret_key_name)
     return create_client(url, secret_key)
 
 

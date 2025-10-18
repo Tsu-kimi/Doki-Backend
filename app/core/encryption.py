@@ -6,16 +6,14 @@ import os
 import base64
 from functools import lru_cache
 from cryptography.fernet import Fernet
-from app.core.secrets import get_secret_value
 
 
 @lru_cache(maxsize=1)
 def _get_cipher() -> Fernet:
-    """Get or create Fernet cipher instance using encryption key from Secret Manager."""
-    key_name = os.getenv("ENCRYPTION_KEY_NAME")
-    if not key_name:
+    """Get or create Fernet cipher instance. Cloud Run injects the actual key via secretKeyRef."""
+    key = os.getenv("ENCRYPTION_KEY_NAME")
+    if not key:
         raise RuntimeError("ENCRYPTION_KEY_NAME is not set in environment")
-    key = get_secret_value(key_name)
     return Fernet(key.encode())
 
 

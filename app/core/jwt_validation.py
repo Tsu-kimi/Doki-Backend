@@ -9,22 +9,22 @@ import jwt
 import httpx
 from typing import Dict, Any, Optional
 from functools import lru_cache
-from app.core.secrets import get_secret_value
 
 
 @lru_cache(maxsize=1)
 def get_jwt_secret() -> str:
     """
-    Get Supabase JWT secret for HS256 token validation from Secret Manager.
+    Get Supabase JWT secret for HS256 token validation.
+    Cloud Run injects the actual secret value via secretKeyRef.
     
     This works with both:
     - Legacy JWT secret system
     - New Signing Keys system (when using HS256 symmetric keys)
     """
-    secret_name = os.getenv("SUPABASE_JWT_SECRET_NAME")
-    if not secret_name:
+    secret = os.getenv("SUPABASE_JWT_SECRET_NAME")
+    if not secret:
         raise RuntimeError("SUPABASE_JWT_SECRET_NAME is not set in environment")
-    return get_secret_value(secret_name)
+    return secret
 
 
 async def get_jwks(supabase_url: str) -> Dict[str, Any]:

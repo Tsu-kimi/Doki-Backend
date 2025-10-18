@@ -3,22 +3,23 @@ import os
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from app.core.secrets import get_secret_value
 from app.core.jwt_validation import validate_jwt_token, extract_user_from_jwt
 
 
 def get_google_client_id() -> str:
-    name = os.getenv("GOOGLE_CLIENT_ID_NAME")
-    if not name:
+    """Cloud Run injects the actual client ID via secretKeyRef."""
+    client_id = os.getenv("GOOGLE_CLIENT_ID_NAME")
+    if not client_id:
         raise RuntimeError("GOOGLE_CLIENT_ID_NAME is not set")
-    return get_secret_value(name)
+    return client_id
 
 
 def get_google_client_secret() -> str:
-    name = os.getenv("GOOGLE_CLIENT_SECRET_NAME")
-    if not name:
+    """Cloud Run injects the actual client secret via secretKeyRef."""
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET_NAME")
+    if not client_secret:
         raise RuntimeError("GOOGLE_CLIENT_SECRET_NAME is not set")
-    return get_secret_value(name)
+    return client_secret
 
 
 def get_google_oauth_config() -> Dict[str, str]:
