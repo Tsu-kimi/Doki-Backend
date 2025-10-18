@@ -16,6 +16,15 @@ def get_project_id() -> str:
 def get_secret_value(secret_name: str, version: str = "latest") -> str:
     if not secret_name:
         raise ValueError("secret_name is required")
+    
+    # Parse Google Cloud Run secret reference format: "Secret:secret-name:version"
+    if secret_name.startswith("Secret:"):
+        parts = secret_name.split(":")
+        if len(parts) >= 2:
+            secret_name = parts[1]
+        if len(parts) >= 3:
+            version = parts[2]
+    
     name = f"projects/{get_project_id()}/secrets/{secret_name}/versions/{version}"
     response = _client.access_secret_version(name=name)
     return response.payload.data.decode("utf-8")
