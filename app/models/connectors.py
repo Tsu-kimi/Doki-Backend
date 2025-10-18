@@ -60,7 +60,7 @@ class TableColumn(BaseModel):
 class TableSchema(BaseModel):
     """Schema for a Supabase table."""
     table_name: str
-    schema: str = Field(default="public", description="PostgreSQL schema name")
+    schema_name: str = Field(default="public", description="PostgreSQL schema name")
     columns: List[TableColumn]
 
 

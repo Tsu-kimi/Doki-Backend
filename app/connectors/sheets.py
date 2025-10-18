@@ -7,7 +7,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from app.connectors.supabase import get_supabase_client
-from app.core.encryption import decrypt_token
+from app.core.encryption import decrypt_token_from_storage
+from app.auth.dependencies import get_google_oauth_config
 from app.models.connectors import SpreadsheetInfo, SpreadsheetSchema, SheetTab, SheetColumn
 
 
@@ -35,20 +36,34 @@ async def get_user_google_credentials(user_id: str) -> Optional[Credentials]:
     
     cred_data = response.data[0]
     
-    # Decrypt tokens
-    access_token = decrypt_token(bytes.fromhex(cred_data["access_token_encrypted"]))
-    refresh_token = decrypt_token(bytes.fromhex(cred_data["refresh_token_encrypted"])) if cred_data.get("refresh_token_encrypted") else None
-    
-    # Build Credentials object
-    credentials = Credentials(
-        token=access_token,
-        refresh_token=refresh_token,
-        token_uri="https://oauth2.googleapis.com/token",
-        client_id=None,  # Not needed for API calls
-        client_secret=None,
-    )
-    
-    return credentials
+    try:
+        # Decrypt tokens
+        access_token = decrypt_token_from_storage(cred_data["access_token_encrypted"])
+        refresh_token = decrypt_token_from_storage(cred_data.get("refresh_token_encrypted")) if cred_data.get("refresh_token_encrypted") else None
+        
+        print(f"Decrypted access_token length: {len(access_token) if access_token else 0}")
+        print(f"Decrypted refresh_token length: {len(refresh_token) if refresh_token else 0}")
+        
+        # Get OAuth config for client_id and client_secret (needed for token refresh)
+        oauth_config = get_google_oauth_config()
+        
+        # Build Credentials object
+        credentials = Credentials(
+            token=access_token,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=oauth_config["client_id"],
+            client_secret=oauth_config["client_secret"],
+        )
+        
+        print(f"Credentials object created successfully")
+        return credentials
+        
+    except Exception as e:
+        print(f"Error in get_user_google_credentials: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 async def list_user_spreadsheets(user_id: str) -> List[SpreadsheetInfo]:
@@ -99,9 +114,15 @@ async def list_user_spreadsheets(user_id: str) -> List[SpreadsheetInfo]:
         return spreadsheets
         
     except HttpError as error:
+        print(f"Google API HttpError: status={error.resp.status}, reason={error._get_reason()}")
         if error.resp.status == 401:
             raise ValueError("Invalid or expired Google credentials. Please re-authenticate.")
         raise ValueError(f"Google Drive API error: {error}")
+    except Exception as e:
+        print(f"Unexpected error in list_user_spreadsheets: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 async def get_spreadsheet_schema(user_id: str, spreadsheet_id: str) -> SpreadsheetSchema:
