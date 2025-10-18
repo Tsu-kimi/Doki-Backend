@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from app.api.connectors import router as connectors_router
 from app.api.agent import router as agent_router
@@ -15,6 +16,18 @@ if os.getenv("ENVIRONMENT") != "production":
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 app = FastAPI(title="Doki Backend")
+
+# Configure CORS for frontend access
+# In production, set ALLOWED_ORIGINS environment variable with comma-separated domains
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Add session middleware for OAuth state management
 # Fetch session secret from Secret Manager
